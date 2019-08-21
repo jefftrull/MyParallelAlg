@@ -9,8 +9,11 @@
 // introduce Google Benchmark
 #include <benchmark/benchmark.h>
 
-int main()
+int main(int argc, char* argv[])
 {
+    // process and remove gbench arguments
+    benchmark::Initialize(&argc, argv);
+
     // first benchmark: std::accumulate
     benchmark::RegisterBenchmark(
         "std::accumulate",
