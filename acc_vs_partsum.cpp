@@ -6,7 +6,6 @@
 #include <iostream>
 #include <vector>
 #include <numeric>
-#include <random>
 
 // introduce Google Benchmark
 #include <benchmark/benchmark.h>

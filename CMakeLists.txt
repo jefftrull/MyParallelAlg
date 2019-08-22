@@ -41,5 +41,5 @@ add_executable( avps acc_vs_partsum.cpp )
 target_link_libraries( avps gbench )
 
 # Second executable: introduce an additional thread to do accumulate on first half
-add_executable( ps2t partial_sum_2t.cpp )
-target_link_libraries( ps2t gbench )
+add_executable( is2t inclusive_scan_2t.cpp )
+target_link_libraries( is2t gbench )

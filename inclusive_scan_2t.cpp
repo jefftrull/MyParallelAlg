@@ -1,6 +1,7 @@
 // Comparing a plain std::partial_sum vs std::accumulate plus std::partial_sum in a second thread
 // Copyright 2019 Jeff Trull <edaskel@att.net>
 #include "benchmark_scan.hpp"
+#include "serial_scan.hpp"
 
 #include <thread>
 #include <future>
@@ -8,19 +9,6 @@
 #include <iostream>
 #include <vector>
 #include <numeric>
-
-// A necessary building block
-template <typename InputIt, typename OutputIt, class T>
-OutputIt
-inclusive_scan_serial(InputIt start, InputIt end, OutputIt d_start, T init = T{})
-{
-    for (T sum = init; start != end; start++, d_start++)
-    {
-        sum += *start;
-        *d_start = sum;
-    }
-    return d_start;
-}
 
 template <typename InputIt, typename OutputIt>
 OutputIt

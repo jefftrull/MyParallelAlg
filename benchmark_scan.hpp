@@ -58,7 +58,7 @@ register_benchmark(const char * name,
                 fn(result.begin(), result.end(), result.begin());
                 benchmark::DoNotOptimize(result);
             }
-        })->Range(8, 1 << 25)->UseRealTime();
+        })->Range(256, 1 << 27)->UseRealTime();
 }
 
 #endif // BENCHMARK_SCAN_HPP
