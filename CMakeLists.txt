@@ -39,3 +39,7 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror" )
 # First executable: benchmarks std::accumulate (read only) vs std::partial_sum (intermediate writes)
 add_executable( avps acc_vs_partsum.cpp )
 target_link_libraries( avps gbench )
+
+# Second executable: introduce an additional thread to do accumulate on first half
+add_executable( ps2t partial_sum_2t.cpp )
+target_link_libraries( ps2t gbench )
