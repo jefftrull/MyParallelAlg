@@ -13,6 +13,8 @@
 
 #include <benchmark/benchmark.h>
 
+int n_threads = 2;
+
 //
 // break out all the code necessary to benchmark an inclusive_scan implementation here
 //
@@ -58,7 +60,38 @@ register_benchmark(const char * name,
                 fn(result.begin(), result.end(), result.begin());
                 benchmark::DoNotOptimize(result);
             }
-        })->Range(256, 1 << 27)->UseRealTime();
+        })->Range(512, 1 << 27)->UseRealTime();
+}
+
+// custom Range approach as described in docs
+void
+nt_range_setter(benchmark::internal::Benchmark* b)
+{
+    for (int sz = 512; sz <= (1 << 27); sz *= 8)
+        for (int nt = 2; nt <= 8; ++nt)
+            b->Args({sz, nt});
+}
+
+// a benchmark that uses multiple threads
+template <typename InputIt, typename OutputIt>
+void
+register_benchmark_mt(const char * name,
+                      OutputIt (*fn)(InputIt, InputIt, OutputIt))
+{
+    using T = typename std::iterator_traits<InputIt>::value_type;
+
+    benchmark::RegisterBenchmark(
+        name,
+        [fn](benchmark::State & state)
+        {
+            RandomInputFixture<T> inp(state);
+            n_threads = state.range(1);
+            std::vector<T> result = inp.data;
+            for (auto _ : state) {
+                fn(result.begin(), result.end(), result.begin());
+                benchmark::DoNotOptimize(result);
+            }
+        })->Apply(nt_range_setter)->UseRealTime();
 }
 
 #endif // BENCHMARK_SCAN_HPP

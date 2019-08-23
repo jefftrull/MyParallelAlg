@@ -43,3 +43,8 @@ target_link_libraries( avps gbench )
 # Second executable: introduce an additional thread to do accumulate on first half
 add_executable( is2t inclusive_scan_2t.cpp )
 target_link_libraries( is2t gbench )
+
+# Third: the same, but multiple threads for a family of curves
+add_executable( isnt inclusive_scan_nt.cpp )
+target_link_libraries( isnt gbench )
+
