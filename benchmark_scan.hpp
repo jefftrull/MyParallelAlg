@@ -60,14 +60,15 @@ register_benchmark(const char * name,
                 fn(result.begin(), result.end(), result.begin());
                 benchmark::DoNotOptimize(result);
             }
-        })->Range(512, 1 << 27)->UseRealTime();
+        })->RangeMultiplier(2)->Range(1 << 20, 1 << 27)->UseRealTime();
 }
 
 // custom Range approach as described in docs
+// allows us to cover threadcount linearly and size exponentially
 void
 nt_range_setter(benchmark::internal::Benchmark* b)
 {
-    for (int sz = 512; sz <= (1 << 27); sz *= 8)
+    for (int sz = 1 << 20; sz <= (1 << 27); sz *= 2)
         for (int nt = 2; nt <= 8; ++nt)
             b->Args({sz, nt});
 }
