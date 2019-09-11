@@ -70,6 +70,13 @@ int main(int argc, char* argv[])
     // process and remove gbench arguments
     benchmark::Initialize(&argc, argv);
 
+    // set up event counters
+    events_to_count.emplace_back(PERF_TYPE_HARDWARE,
+                                 PERF_COUNT_HW_INSTRUCTIONS,
+                                 "instructions");
+    events_to_count.emplace_back(PERF_TYPE_HARDWARE,
+                                 PERF_COUNT_HW_CPU_CYCLES,
+                                 "cycles");
     register_benchmark(
         "std::partial_sum",
         std::partial_sum<

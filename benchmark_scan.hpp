@@ -4,6 +4,10 @@
 #ifndef BENCHMARK_SCAN_HPP
 #define BENCHMARK_SCAN_HPP
 
+#include "pmu.hpp"
+
+#include <benchmark/benchmark.h>
+
 #include <iostream>
 #include <iterator>
 #include <vector>
@@ -11,9 +15,15 @@
 #include <random>
 #include <string>
 
-#include <benchmark/benchmark.h>
+//
+// GLOBALS
+// we need to supply some sideband information from the benchmark which should not pass
+// through the normal scan algorithm interface. This is my solution for now (sigh)
+// Maybe the "Passing Arbitrary Arguments to a Benchmark" section has some ideas
+//
 
-int n_threads = 2;
+extern int n_threads;
+extern std::vector<PMUEvent> events_to_count;
 
 //
 // break out all the code necessary to benchmark an inclusive_scan implementation here
@@ -57,21 +67,43 @@ register_benchmark(const char * name,
             RandomInputFixture<T> inp(state);
             std::vector<T> result(state.range(0));
             for (auto _ : state) {
+                // enable event counting
+                state.PauseTiming();
+                for (auto & evt : events_to_count)
+                {
+                    evt.on();
+                }
+                state.ResumeTiming();
+
+                // run target code
                 fn(inp.data.begin(), inp.data.end(), result.begin());
                 benchmark::DoNotOptimize(result);
+
+                // disable event counting
+                state.PauseTiming();
+                for (auto & evt : events_to_count)
+                {
+                    evt.off();
+                }
+                state.ResumeTiming();
+
             }
-        })->RangeMultiplier(2)->Range(1 << 20, 1 << 27)->UseRealTime();
+
+            // record counter results
+            for (auto & evt : events_to_count)
+            {
+                auto ct = evt.count();
+                state.counters[evt.name()] = ct / state.iterations();;
+                evt.reset();
+            }
+
+       })->RangeMultiplier(2)->Range(1 << 1, 1 << 27)->UseRealTime();
 }
 
 // custom Range approach as described in docs
 // allows us to cover threadcount linearly and size exponentially
 void
-nt_range_setter(benchmark::internal::Benchmark* b)
-{
-    for (int sz = 1 << 20; sz <= (1 << 27); sz *= 2)
-        for (int nt = 2; nt <= 8; ++nt)
-            b->Args({sz, nt});
-}
+nt_range_setter(benchmark::internal::Benchmark* b);
 
 // a benchmark that uses multiple threads
 template <typename InputIt, typename OutputIt>
@@ -85,13 +117,49 @@ register_benchmark_mt(const char * name,
         name,
         [fn](benchmark::State & state)
         {
+            std::vector<std::pair<decltype(state.iterations()), long long>> bm_counts;
+
             RandomInputFixture<T> inp(state);
             n_threads = state.range(1);
             std::vector<T> result(state.range(0));
             for (auto _ : state) {
+                // enable event counting
+                state.PauseTiming();
+                for (auto & evt : events_to_count)
+                {
+                    evt.on();
+                }
+                state.ResumeTiming();
+
+                // run target code
                 fn(inp.data.begin(), inp.data.end(), result.begin());
                 benchmark::DoNotOptimize(result);
+
+                // disable event counting
+                state.PauseTiming();
+                for (auto & evt : events_to_count)
+                {
+                    evt.off();
+                }
+                // state.iterations() does not appear to be valid here
+                bm_counts.emplace_back(state.iterations(), events_to_count[0].count());
+                state.ResumeTiming();
+
             }
+
+            // record counter results
+            for (auto & evt : events_to_count)
+            {
+                state.counters[evt.name()] = evt.count() / state.iterations();
+                evt.reset();    // does not seem to reset the counter for some reason
+                if (evt.count() > 100)
+                {
+                    std::cerr << "counter value: " << evt.count() << "\n";
+                    throw std::runtime_error("counter was not reset!\n");
+                }
+                bm_counts.emplace_back(state.iterations(), -1);
+            }
+
         })->Apply(nt_range_setter)->UseRealTime();
 }
 
