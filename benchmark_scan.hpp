@@ -55,9 +55,9 @@ register_benchmark(const char * name,
         [fn](benchmark::State & state)
         {
             RandomInputFixture<T> inp(state);
-            std::vector<T> result = inp.data;
+            std::vector<T> result(state.range(0));
             for (auto _ : state) {
-                fn(result.begin(), result.end(), result.begin());
+                fn(inp.data.begin(), inp.data.end(), result.begin());
                 benchmark::DoNotOptimize(result);
             }
         })->RangeMultiplier(2)->Range(1 << 20, 1 << 27)->UseRealTime();
@@ -87,9 +87,9 @@ register_benchmark_mt(const char * name,
         {
             RandomInputFixture<T> inp(state);
             n_threads = state.range(1);
-            std::vector<T> result = inp.data;
+            std::vector<T> result(state.range(0));
             for (auto _ : state) {
-                fn(result.begin(), result.end(), result.begin());
+                fn(inp.data.begin(), inp.data.end(), result.begin());
                 benchmark::DoNotOptimize(result);
             }
         })->Apply(nt_range_setter)->UseRealTime();
