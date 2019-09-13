@@ -1,14 +1,5 @@
-// Comparing a plain std::partial_sum vs std::accumulate/std::partial_sum in multiple threads
+// A multi-threaded inclusive_scan with std::accumulate "lookahead"
 // Copyright 2019 Jeff Trull <edaskel@att.net>
-#include "benchmark_scan.hpp"
-#include "serial_scan.hpp"
-
-#include <thread>
-#include <future>
-#include <iterator>
-#include <iostream>
-#include <vector>
-#include <numeric>
 
 template <typename InputIt, typename OutputIt, typename T = typename std::iterator_traits<InputIt>::value_type>
 OutputIt
@@ -16,9 +7,11 @@ inclusive_scan_mt(InputIt start, InputIt end, OutputIt d_start, T init = T{})
 {
     // use n_threads global (set by benchmarking code) to spawn partitions
     std::size_t sz = std::distance(start, end);
+/*
     if (sz < 40000)        // arbitrary heuristic based on experiment
         // faster just to run sequentially
         return inclusive_scan_seq<InputIt, OutputIt, T>(start, end, d_start, init);
+*/
 
     std::size_t psize = sz / n_threads;
     std::vector<std::promise<T>> part_sum_prom(n_threads - 1);
@@ -63,29 +56,3 @@ inclusive_scan_mt(InputIt start, InputIt end, OutputIt d_start, T init = T{})
     return d_end;
 }
 
-int main(int argc, char* argv[])
-{
-    // process and remove gbench arguments
-    benchmark::Initialize(&argc, argv);
-
-    // set up event counters
-    events_to_count.emplace_back(PERF_TYPE_HARDWARE,
-                                 PERF_COUNT_HW_INSTRUCTIONS,
-                                 "instructions");
-    events_to_count.emplace_back(PERF_TYPE_HARDWARE,
-                                 PERF_COUNT_HW_CPU_CYCLES,
-                                 "cycles");
-    register_benchmark(
-        "inclusive_scan_seq",
-        inclusive_scan_seq<
-            std::vector<int>::const_iterator,
-            std::vector<int>::iterator>);
-
-    register_benchmark_mt(
-        "inclusive_scan",
-        inclusive_scan_mt<
-            std::vector<int>::const_iterator,
-            std::vector<int>::iterator>);
-
-    benchmark::RunSpecifiedBenchmarks();
-}
