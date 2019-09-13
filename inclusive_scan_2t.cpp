@@ -10,12 +10,10 @@
 #include <vector>
 #include <numeric>
 
-template <typename InputIt, typename OutputIt>
+template <typename InputIt, typename OutputIt, typename T = typename std::iterator_traits<InputIt>::value_type>
 OutputIt
-inclusive_scan_2t(InputIt start, InputIt end, OutputIt d_start)
+inclusive_scan_2t(InputIt start, InputIt end, OutputIt d_start, T init)
 {
-    using T = typename std::iterator_traits<InputIt>::value_type;
-
     // calculate partition point (halfway)
     std::size_t sz = std::distance(start, end);
     InputIt part = start;
@@ -24,20 +22,20 @@ inclusive_scan_2t(InputIt start, InputIt end, OutputIt d_start)
     // launch first partition thread
     std::promise<T> p1_sum_prom;
     std::thread p1(
-        [start, end, part, d_start, &p1_sum_prom](){
+        [start, part, d_start, &p1_sum_prom, &init](){
             // calculate the sum of the first partition
             T p1_result = std::accumulate(start, part, T{});
             // send it to be used for the second partition
             p1_sum_prom.set_value(p1_result);
             // make a second pass to store the intermediate values
-            inclusive_scan_serial<InputIt, OutputIt, T>(start, part, d_start);
+            inclusive_scan_seq<InputIt, OutputIt, T>(start, part, d_start, init);
         });
 
     // complete calculation using accumulation result from partition 1
     T p1_sum = p1_sum_prom.get_future().get();
     OutputIt d_part = d_start;
     std::advance(d_part, sz / 2);
-    OutputIt d_end = inclusive_scan_serial(part, end, d_part, p1_sum);
+    OutputIt d_end = inclusive_scan_seq(part, end, d_part, p1_sum);
 
     // wait for the first partition to complete
     p1.join();
@@ -52,7 +50,7 @@ int main(int argc, char* argv[])
 
     register_benchmark(
         "std::partial_sum",
-        std::partial_sum<
+        partial_sum<
             std::vector<int>::const_iterator,
             std::vector<int>::iterator>);
 

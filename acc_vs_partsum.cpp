@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 
     register_benchmark(
         "std::partial_sum",
-        std::partial_sum<
+        partial_sum<
             std::vector<int>::const_iterator,
             std::vector<int>::iterator>);
 

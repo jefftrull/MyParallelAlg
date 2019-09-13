@@ -53,13 +53,11 @@ struct RandomInputFixture
 };
 
 // create and register benchmark on a scan function
-template <typename InputIt, typename OutputIt>
+template <typename InputIt, typename OutputIt, typename T = typename std::iterator_traits<InputIt>::value_type>
 void
 register_benchmark(const char * name,
-                   OutputIt (*fn)(InputIt, InputIt, OutputIt))
+                   OutputIt (*fn)(InputIt, InputIt, OutputIt, T))
 {
-    using T = typename std::iterator_traits<InputIt>::value_type;
-
     benchmark::RegisterBenchmark(
         name,
         [fn](benchmark::State & state)
@@ -76,7 +74,7 @@ register_benchmark(const char * name,
                 state.ResumeTiming();
 
                 // run target code
-                fn(inp.data.begin(), inp.data.end(), result.begin());
+                fn(inp.data.begin(), inp.data.end(), result.begin(), T{});
                 benchmark::DoNotOptimize(result);
 
                 // disable event counting
@@ -106,12 +104,11 @@ void
 nt_range_setter(benchmark::internal::Benchmark* b);
 
 // a benchmark that uses multiple threads
-template <typename InputIt, typename OutputIt>
+template <typename InputIt, typename OutputIt, typename T = typename std::iterator_traits<InputIt>::value_type>
 void
 register_benchmark_mt(const char * name,
-                      OutputIt (*fn)(InputIt, InputIt, OutputIt))
+                      OutputIt (*fn)(InputIt, InputIt, OutputIt, T))
 {
-    using T = typename std::iterator_traits<InputIt>::value_type;
 
     benchmark::RegisterBenchmark(
         name,
@@ -132,7 +129,7 @@ register_benchmark_mt(const char * name,
                 state.ResumeTiming();
 
                 // run target code
-                fn(inp.data.begin(), inp.data.end(), result.begin());
+                fn(inp.data.begin(), inp.data.end(), result.begin(), T{});
                 benchmark::DoNotOptimize(result);
 
                 // disable event counting
@@ -161,6 +158,15 @@ register_benchmark_mt(const char * name,
             }
 
         })->Apply(nt_range_setter)->UseRealTime();
+}
+
+// wrap std::partial_sum so it takes an initial value
+template <typename InputIt, typename OutputIt,
+          typename T = typename std::iterator_traits<InputIt>::value_type>
+OutputIt
+partial_sum(InputIt start, InputIt stop, OutputIt d_stop, T /* just discard, for benchmarking */)
+{
+    return std::partial_sum(start, stop, d_stop);
 }
 
 #endif // BENCHMARK_SCAN_HPP

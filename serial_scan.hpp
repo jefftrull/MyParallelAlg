@@ -4,9 +4,9 @@
 #ifndef SERIAL_SCAN_HPP
 #define SERIAL_SCAN_HPP
 
-template <typename InputIt, typename OutputIt, class T>
+template <typename InputIt, typename OutputIt, typename T = typename std::iterator_traits<InputIt>::value_type>
 OutputIt
-inclusive_scan_serial(InputIt start, InputIt end, OutputIt d_start, T init = T{})
+inclusive_scan_seq(InputIt start, InputIt end, OutputIt d_start, T init = T{})
 {
     for (T sum = init; start != end; start++, d_start++)
     {
