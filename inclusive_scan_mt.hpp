@@ -1,6 +1,12 @@
 // A multi-threaded inclusive_scan with std::accumulate "lookahead"
 // Copyright 2019 Jeff Trull <edaskel@att.net>
 
+#include "benchmark_scan.hpp"
+#include "serial_scan.hpp"
+
+#include <iterator>
+#include <future>
+
 template <typename InputIt, typename OutputIt, typename T = typename std::iterator_traits<InputIt>::value_type>
 OutputIt
 inclusive_scan_mt(InputIt start, InputIt end, OutputIt d_start, T init = T{})

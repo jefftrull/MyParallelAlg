@@ -6,8 +6,6 @@
 #include "serial_scan.hpp"
 
 #include <thread>
-#include <future>
-#include <iterator>
 #include <iostream>
 #include <vector>
 #include <numeric>
