@@ -114,8 +114,6 @@ register_benchmark_mt(const char * name,
         name,
         [fn](benchmark::State & state)
         {
-            std::vector<std::pair<decltype(state.iterations()), long long>> bm_counts;
-
             RandomInputFixture<T> inp(state);
             n_threads = state.range(1);
             std::vector<T> result(state.range(0));
@@ -138,8 +136,6 @@ register_benchmark_mt(const char * name,
                 {
                     evt.off();
                 }
-                // state.iterations() does not appear to be valid here
-                bm_counts.emplace_back(state.iterations(), events_to_count[0].count());
                 state.ResumeTiming();
 
             }
@@ -154,7 +150,6 @@ register_benchmark_mt(const char * name,
                     std::cerr << "counter value: " << evt.count() << "\n";
                     throw std::runtime_error("counter was not reset!\n");
                 }
-                bm_counts.emplace_back(state.iterations(), -1);
             }
 
         })->Apply(nt_range_setter)->UseRealTime();
