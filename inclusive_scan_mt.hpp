@@ -1,6 +1,9 @@
 // A multi-threaded inclusive_scan with std::accumulate "lookahead"
 // Copyright 2019 Jeff Trull <edaskel@att.net>
 
+#ifndef INCLUSIVE_SCAN_MT_HPP
+#define INCLUSIVE_SCAN_MT_HPP
+
 #include "benchmark_scan.hpp"
 #include "serial_scan.hpp"
 
@@ -62,3 +65,5 @@ inclusive_scan_mt(InputIt start, InputIt end, OutputIt d_start, T init = T{})
     return d_end;
 }
 
+
+#endif // INCLUSIVE_SCAN_MT_HPP
