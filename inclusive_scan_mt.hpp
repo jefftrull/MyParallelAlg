@@ -11,15 +11,15 @@
 #include <future>
 
 template <typename InputIt, typename OutputIt, typename T = typename std::iterator_traits<InputIt>::value_type>
-OutputIt
-inclusive_scan_mt(InputIt start, InputIt end, OutputIt d_start, T init = T{})
+std::pair<OutputIt, T>
+inclusive_scan_mt_impl(InputIt start, InputIt end, OutputIt d_start, T init = T{})
 {
     // use n_threads global (set by benchmarking code) to spawn partitions
     std::size_t sz = std::distance(start, end);
 /*
     if (sz < 40000)        // arbitrary heuristic based on experiment
         // faster just to run sequentially
-        return inclusive_scan_seq<InputIt, OutputIt, T>(start, end, d_start, init);
+        return inclusive_scan_seq_impl<InputIt, OutputIt, T>(start, end, d_start, init);
 */
 
     std::size_t psize = sz / n_threads;
@@ -54,7 +54,7 @@ inclusive_scan_mt(InputIt start, InputIt end, OutputIt d_start, T init = T{})
     // - there is no need to do the "accumulate" part
     // - we do it directly in this thread
     T acc_so_far = part_sum_prom.back().get_future().get();
-    OutputIt d_end = inclusive_scan_seq<InputIt, OutputIt, T>(start, end, d_start, acc_so_far);
+    auto result = inclusive_scan_seq_impl<InputIt, OutputIt, T>(start, end, d_start, acc_so_far);
 
     // join all the threads we created
     for (auto & t : part_threads)
@@ -62,7 +62,18 @@ inclusive_scan_mt(InputIt start, InputIt end, OutputIt d_start, T init = T{})
         t.join();
     }
 
-    return d_end;
+    // maybe a future improvement is to output a future with a final accumulate result for chaining
+    // in the chunk case... dunno
+
+    return result;
+}
+
+
+template <typename InputIt, typename OutputIt, typename T = typename std::iterator_traits<InputIt>::value_type>
+OutputIt
+inclusive_scan_mt(InputIt start, InputIt end, OutputIt d_start, T init = T{})
+{
+    return inclusive_scan_mt_impl(start, end, d_start, init).first;
 }
 
 

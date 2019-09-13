@@ -5,15 +5,23 @@
 #define SERIAL_SCAN_HPP
 
 template <typename InputIt, typename OutputIt, typename T = typename std::iterator_traits<InputIt>::value_type>
-OutputIt
-inclusive_scan_seq(InputIt start, InputIt end, OutputIt d_start, T init = T{})
+std::pair<OutputIt, T>
+inclusive_scan_seq_impl(InputIt start, InputIt end, OutputIt d_start, T init = T{})
 {
-    for (T sum = init; start != end; start++, d_start++)
+    T sum = init;
+    for (; start != end; start++, d_start++)
     {
         sum += *start;
         *d_start = sum;
     }
-    return d_start;
+    return std::make_pair(d_start, sum);
+}
+
+template <typename InputIt, typename OutputIt, typename T = typename std::iterator_traits<InputIt>::value_type>
+OutputIt
+inclusive_scan_seq(InputIt start, InputIt end, OutputIt d_start, T init = T{})
+{
+    return inclusive_scan_seq_impl(start, end, d_start, init).first;
 }
 
 #endif // SERIAL_SCAN_HPP
