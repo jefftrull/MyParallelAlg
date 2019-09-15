@@ -48,3 +48,7 @@ target_link_libraries( is2t gbench )
 add_executable( ismt inclusive_scan_mt.cpp pmu.cpp benchmark_scan.cpp )
 target_link_libraries( ismt gbench )
 
+# Fourth: the same, but dividing the problem into manageable chunks before multithreading
+add_executable( ismtc inclusive_scan_chunked.cpp pmu.cpp benchmark_scan.cpp )
+target_link_libraries( ismtc gbench )
+
