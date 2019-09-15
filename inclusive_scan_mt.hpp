@@ -10,6 +10,52 @@
 #include <iterator>
 #include <future>
 
+// a prefetching "accumulate"
+// didn't seem to help
+// do I need to check cache line alignment here too?
+
+template <typename It, typename T = typename std::iterator_traits<It>::value_type>
+T
+accumulate(It start, It end, T init = T{})
+{
+    // do 16 (one cache line) at a time
+    const std::size_t items_per_line = 16;
+    auto sz = std::distance(start, end);   // this may be costly for fwd iterators
+
+    // take care of any items that are not chunks of 16 first
+    auto preamble_sz = sz % items_per_line;
+    for (std::size_t ofs = 0; ofs < preamble_sz; ++ofs)
+    {
+        init += *start++;
+    }
+
+    // now work 16 at a time
+    auto pf = start; std::advance(pf, items_per_line);
+    for (; start != end; std::advance(pf, items_per_line))
+    {
+        // launch prefetch of next item
+        if (pf != end)
+            __builtin_prefetch(&(*pf), 0, 3);
+
+        // iterate over the cache line
+        while (start != pf)
+        {
+            init += *start++;
+        }
+
+    }
+
+    return init;
+
+/*
+    while (start != end)
+        init += *start++;
+
+    return init;
+*/
+
+}
+
 template <typename InputIt, typename OutputIt, typename T = typename std::iterator_traits<InputIt>::value_type>
 std::pair<OutputIt, T>
 inclusive_scan_mt_impl(InputIt start, InputIt end, OutputIt d_start, T init = T{})
