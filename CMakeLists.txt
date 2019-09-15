@@ -45,6 +45,6 @@ add_executable( is2t inclusive_scan_2t.cpp pmu.cpp benchmark_scan.cpp )
 target_link_libraries( is2t gbench )
 
 # Third: the same, but multiple threads for a family of curves
-add_executable( isnt inclusive_scan_mt.cpp pmu.cpp benchmark_scan.cpp )
-target_link_libraries( isnt gbench )
+add_executable( ismt inclusive_scan_mt.cpp pmu.cpp benchmark_scan.cpp )
+target_link_libraries( ismt gbench )
 
