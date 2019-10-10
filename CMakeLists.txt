@@ -13,6 +13,9 @@ if( NOT CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE Release CACHE STRING "Default build type (Debug, Release, RelWithDebInfo)" FORCE )
 endif()
 
+# for thread_pool... and whatever else
+find_package( Boost 1.69 REQUIRED system )
+
 # download and use Google Benchmark
 include( ExternalProject )
 ExternalProject_Add( GBENCH
@@ -46,9 +49,9 @@ target_link_libraries( is2t gbench )
 
 # Third: the same, but multiple threads for a family of curves
 add_executable( ismt inclusive_scan_mt.cpp pmu.cpp benchmark_scan.cpp )
-target_link_libraries( ismt gbench )
+target_link_libraries( ismt gbench Boost::boost Boost::system )
 
 # Fourth: the same, but dividing the problem into manageable chunks before multithreading
 add_executable( ismtc inclusive_scan_chunked.cpp pmu.cpp benchmark_scan.cpp )
-target_link_libraries( ismtc gbench )
+target_link_libraries( ismtc gbench Boost::boost Boost::system )
 

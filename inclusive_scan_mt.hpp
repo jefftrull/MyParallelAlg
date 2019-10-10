@@ -7,6 +7,8 @@
 #include "benchmark_scan.hpp"
 #include "serial_scan.hpp"
 
+#include <boost/asio.hpp>
+
 #include <iterator>
 #include <future>
 
@@ -24,12 +26,13 @@ inclusive_scan_mt_impl(InputIt start, InputIt end, OutputIt d_start, T init = T{
 
     std::size_t psize = sz / n_threads;
     std::vector<std::promise<T>> part_sum_prom(n_threads - 1);
-    std::vector<std::thread> part_threads(n_threads - 1);
+    boost::asio::thread_pool tpool(n_threads - 1);
     for (int p = 0; p < n_threads-1; ++p)
     {
         InputIt p_end = start;
         std::advance(p_end, psize);
-        part_threads[p] = std::thread(
+        boost::asio::post(
+            tpool,
             [p, start, p_end, d_start, &part_sum_prom, &init](){
                 T p_result = std::accumulate(start, p_end, T{});
                 // wait for result of previous partition's accumulate
@@ -56,14 +59,10 @@ inclusive_scan_mt_impl(InputIt start, InputIt end, OutputIt d_start, T init = T{
     T acc_so_far = part_sum_prom.back().get_future().get();
     auto result = inclusive_scan_seq_impl<InputIt, OutputIt, T>(start, end, d_start, acc_so_far);
 
-    // join all the threads we created
-    for (auto & t : part_threads)
-    {
-        t.join();
-    }
-
     // maybe a future improvement is to output a future with a final accumulate result for chaining
     // in the chunk case... dunno
+
+    tpool.join();
 
     return result;
 }
